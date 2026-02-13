@@ -20,5 +20,5 @@ func main() {
 	log.Println("Server is starting...")
 	setupFlags()
 
-	sever.HelloWorld()
+	sever.RunTcpServer()
 }

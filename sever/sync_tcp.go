@@ -1,7 +1,78 @@
 package sever
 
-import "fmt"
+import (
+	"log"
+	"net"
+	"strconv"
 
-func HelloWorld() {
-	fmt.Println("hello")
+	config "github.com/anujkaushik1/GoDis/Config"
+)
+
+func readCommand(client net.Conn) (string, error) {
+	buffer := make([]byte, 1024)
+	n, err := client.Read(buffer)
+	if err != nil {
+		return "", err
+	}
+
+	return string(buffer[:n]), nil
+
+}
+
+func respond(client net.Conn, cmd string) error {
+	responseMsg := "response = " + cmd
+	_, err := client.Write([]byte(responseMsg))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func RunTcpServer() {
+	host := config.App.Host
+	port := config.App.Port
+	log.Println("Starting TCP server on: ", host, ":", port)
+
+	noOfClients := 0
+
+	listener, err := net.Listen("tcp", host+":"+strconv.Itoa(port))
+	if err != nil {
+		log.Fatal("Failed to start TCP server:", err)
+	}
+
+	for {
+		client, err := listener.Accept()
+		if err != nil {
+			panic(err)
+		}
+
+		noOfClients++
+
+		log.Println("Total Connected Cliens = ", noOfClients)
+
+		for {
+			cmd, err := readCommand(client)
+
+			if err != nil {
+				client.Close()
+				noOfClients--
+				log.Println("client disconnected")
+				break
+
+			}
+
+			err = respond(client, cmd)
+			if err != nil {
+				client.Close()
+				noOfClients--
+				log.Println("client disconnected2222")
+				break
+
+			}
+
+		}
+
+	}
+
 }
