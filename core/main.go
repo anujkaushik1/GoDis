@@ -72,11 +72,9 @@ func readArray(bytes []byte) (interface{}, int, error) {
 
 	pos += 2
 
-	n := len(bytes)
-
 	arrayElements := make([]interface{}, numberOfElements)
 	arrayIdx := 0
-	for pos < n {
+	for arrayIdx < len(arrayElements) {
 		value, delta, err := decodeOne(bytes[pos:])
 		if err != nil {
 			return nil, 0, err
@@ -129,16 +127,20 @@ func decode(bytes []byte) (interface{}, error) {
 
 func main() {
 	val, err := decode([]byte(
-		"*4\r\n" +
+		"*2\r\n" +
+			"*2\r\n" +
 			"$3\r\nSET\r\n" +
 			"$5\r\nmykey\r\n" +
-			":100\r\n" +
+			"*2\r\n" +
 			"*2\r\n" +
 			"$3\r\nGET\r\n" +
-			"$11\r\nanotherKey\r\n",
+			"$11\r\nanotherKey\r\n" +
+			":100\r\n",
 	))
+
 	if err != nil {
 		fmt.Println("error in decode = ", err.Error())
 	}
+
 	fmt.Println("ansss = ", val)
 }
