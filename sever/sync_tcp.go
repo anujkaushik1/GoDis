@@ -1,21 +1,26 @@
 package sever
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"strconv"
 
 	config "github.com/anujkaushik1/GoDis/Config"
+	"github.com/anujkaushik1/GoDis/core"
 )
 
-func readCommand(client net.Conn) (string, error) {
+func readCommand(client net.Conn) (*core.RedisCmd, error) {
 	buffer := make([]byte, 1024)
 	n, err := client.Read(buffer)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return string(buffer[:n]), nil
+	tokens, err := core.Decode(buffer[:n])
+	fmt.Println(tokens)
+
+	return nil, nil
 
 }
 
@@ -52,8 +57,7 @@ func RunTcpServer() {
 		log.Println("Total Connected Cliens = ", noOfClients)
 
 		for {
-			cmd, err := readCommand(client)
-
+			_, err := readCommand(client)
 			if err != nil {
 				client.Close()
 				noOfClients--
@@ -62,14 +66,15 @@ func RunTcpServer() {
 
 			}
 
-			err = respond(client, cmd)
-			if err != nil {
-				client.Close()
-				noOfClients--
-				log.Println("client disconnected2222")
-				break
+			client.Write([]byte("+OK\r\n"))
+			// err = respond(client, cmd)
+			// if err != nil {
+			// 	client.Close()
+			// 	noOfClients--
+			// 	log.Println("client disconnected2222")
+			// 	break
 
-			}
+			// }
 
 		}
 
