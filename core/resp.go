@@ -123,3 +123,28 @@ func Decode(bytes []byte) (interface{}, error) {
 	return value, err
 
 }
+
+func DecodeAndFlatten(bytes []byte) []string {
+	v, err := Decode(bytes)
+	if err != nil {
+		return nil
+	}
+	return flatten(v)
+}
+
+func flatten(v interface{}) []string {
+	result := make([]string, 0)
+
+	switch val := v.(type) {
+	case string:
+		result = append(result, val)
+	case int64:
+		result = append(result, strconv.FormatInt(val, 10))
+	case []interface{}:
+		for _, item := range val {
+			result = append(result, flatten(item)...)
+		}
+	}
+
+	return result
+}

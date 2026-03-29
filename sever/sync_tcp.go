@@ -1,7 +1,6 @@
 package sever
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -17,21 +16,20 @@ func readCommand(client net.Conn) (*core.RedisCmd, error) {
 		return nil, err
 	}
 
-	tokens, err := core.Decode(buffer[:n])
-	fmt.Println(tokens)
+	tokens := core.DecodeAndFlatten(buffer[:n])
 
-	return nil, nil
+	redisCmd := core.RedisCmd{
+		Cmd:  tokens[0],
+		Args: tokens[1:],
+	}
+
+	return &redisCmd, nil
 
 }
 
-func respond(client net.Conn, cmd string) error {
-	cmd += ""
-	_, err := client.Write([]byte(cmd))
-	if err != nil {
-		return err
-	}
+func respond(client net.Conn, redisCmd *core.RedisCmd) error {
+	return core.EvalAndRespond(client, redisCmd)
 
-	return nil
 }
 
 func RunTcpServer() {
@@ -57,7 +55,7 @@ func RunTcpServer() {
 		log.Println("Total Connected Cliens = ", noOfClients)
 
 		for {
-			_, err := readCommand(client)
+			redisCmd, err := readCommand(client)
 			if err != nil {
 				client.Close()
 				noOfClients--
@@ -66,15 +64,14 @@ func RunTcpServer() {
 
 			}
 
-			client.Write([]byte("+OK\r\n"))
-			// err = respond(client, cmd)
-			// if err != nil {
-			// 	client.Close()
-			// 	noOfClients--
-			// 	log.Println("client disconnected2222")
-			// 	break
+			err = respond(client, redisCmd)
+			if err != nil {
+				client.Close()
+				noOfClients--
+				log.Println("client disconnected2222")
+				break
 
-			// }
+			}
 
 		}
 
