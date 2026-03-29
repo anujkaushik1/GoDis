@@ -20,8 +20,8 @@ func readCommand(client net.Conn) (string, error) {
 }
 
 func respond(client net.Conn, cmd string) error {
-	responseMsg := "response = " + cmd
-	_, err := client.Write([]byte(responseMsg))
+	cmd += ""
+	_, err := client.Write([]byte(cmd))
 	if err != nil {
 		return err
 	}
