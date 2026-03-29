@@ -59,6 +59,38 @@ func readBulkString(bytes []byte) (string, int, error) {
 
 }
 
+func readArray(bytes []byte) (interface{}, int, error) {
+
+	pos := 1
+
+	numberOfElements := 0
+
+	for bytes[pos] != '\r' {
+		numberOfElements = numberOfElements*10 + int(bytes[pos]-'0')
+		pos++
+	}
+
+	pos += 2
+
+	n := len(bytes)
+
+	arrayElements := make([]interface{}, numberOfElements)
+	arrayIdx := 0
+	for pos < n {
+		value, delta, err := decodeOne(bytes[pos:])
+		if err != nil {
+			return nil, 0, err
+		}
+		pos += delta
+
+		arrayElements[arrayIdx] = value
+		arrayIdx++
+
+	}
+
+	return arrayElements, pos, nil
+}
+
 func decodeOne(bytes []byte) (interface{}, int, error) {
 
 	switch bytes[0] {
@@ -73,6 +105,9 @@ func decodeOne(bytes []byte) (interface{}, int, error) {
 
 	case '$':
 		return readBulkString(bytes)
+
+	case '*':
+		return readArray(bytes)
 
 	}
 
@@ -93,7 +128,15 @@ func decode(bytes []byte) (interface{}, error) {
 }
 
 func main() {
-	val, err := decode([]byte("$5\r\nanujk\r\n"))
+	val, err := decode([]byte(
+		"*4\r\n" +
+			"$3\r\nSET\r\n" +
+			"$5\r\nmykey\r\n" +
+			":100\r\n" +
+			"*2\r\n" +
+			"$3\r\nGET\r\n" +
+			"$11\r\nanotherKey\r\n",
+	))
 	if err != nil {
 		fmt.Println("error in decode = ", err.Error())
 	}
