@@ -38,7 +38,7 @@ func singleThreadedNonBlocking() {
 
 		events := make([]syscall.Kevent_t, 1)
 
-		timeout := syscall.Timespec{Sec: 20, Nsec: 0}
+		timeout := syscall.Timespec{Sec: 1, Nsec: 0}
 
 		n, err := syscall.Kevent(kq, nil, events, &timeout)
 		if err != nil {
@@ -51,8 +51,8 @@ func singleThreadedNonBlocking() {
 
 		fmt.Println("hel =", count)
 		count++
-
-		time.Sleep(1 * time.Second)
+		fmt.Println("Doing heavy stuff....")
+		time.Sleep(10 * time.Second)
 	}
 }
 
