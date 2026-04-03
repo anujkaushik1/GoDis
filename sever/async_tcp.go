@@ -9,8 +9,7 @@ import (
 	config "github.com/anujkaushik1/GoDis/Config"
 )
 
-func  RunAsyncTcpServer() error {
-	fmt.Println("world")
+func RunAsyncTcpServer() error {
 	host := config.App.Host
 	port := config.App.Port
 	log.Println("Starting TCP server on: ", host, ":", port)
@@ -38,7 +37,43 @@ func  RunAsyncTcpServer() error {
 		return err
 	}
 
-	fmt.Println("kaka")
+	kq, err := syscall.Kqueue()
+	if err != nil {
+	}
 
-	return nil
+	event := syscall.Kevent_t{
+		Ident:  uint64(serverFD),
+		Filter: syscall.EVFILT_READ,
+		Flags:  syscall.EV_ADD | syscall.EV_ENABLE,
+	}
+
+	_, err = syscall.Kevent(kq, []syscall.Kevent_t{event}, nil, nil)
+	if err != nil {
+		return err
+
+	}
+
+	fmt.Println("Watching for client connections...")
+
+	events := make([]syscall.Kevent_t, max_clients)
+
+	for {
+		_, err := syscall.Kevent(kq, nil, events, nil)
+		if err != nil {
+			fmt.Println("Error in event:: ", err.Error())
+			continue
+		}
+
+		fmt.Println("New client is ready to be accepted")
+
+		clientFD, _, err := syscall.Accept(serverFD)
+		if err != nil {
+			fmt.Println("Error while accepting client: ", err.Error())
+			continue
+		}
+
+		fmt.Println("Accepted client fd:", clientFD)
+
+	}
+
 }
