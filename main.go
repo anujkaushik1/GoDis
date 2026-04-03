@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	config "github.com/anujkaushik1/GoDis/Config"
@@ -20,5 +21,8 @@ func main() {
 	log.Println("Server is starting...")
 	setupFlags()
 
-	sever.RunTcpServer()
+	err := sever.RunAsyncTcpServer()
+	if err != nil {
+		fmt.Println("final error = ", err.Error())
+	}
 }
