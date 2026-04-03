@@ -9,8 +9,12 @@ func ReadSimpleString(bytes []byte) (string, int, error) {
 
 	pos := 1
 
-	for bytes[pos] != '\r' {
+	for pos < len(bytes) && bytes[pos] != '\r' {
 		pos++
+	}
+
+	if pos >= len(bytes) {
+		return "", 0, errors.New("invalid string: missing \\r\\n terminator")
 	}
 
 	return string(bytes[1:pos]), pos + 2, nil
@@ -25,8 +29,12 @@ func ReadInt64(bytes []byte) (int64, int, error) {
 
 	pos := 1
 
-	for bytes[pos] != '\r' {
+	for pos < len(bytes) && bytes[pos] != '\r' {
 		pos++
+	}
+
+	if pos >= len(bytes) {
+		return 0, 0, errors.New("invalid integer: missing \\r\\n terminator")
 	}
 
 	val, err := strconv.ParseInt(string(bytes[1:pos]), 10, 64)
@@ -42,16 +50,24 @@ func ReadInt64(bytes []byte) (int64, int, error) {
 func ReadBulkString(bytes []byte) (string, int, error) {
 	pos := 1
 
-	for bytes[pos] != '\r' {
+	for pos < len(bytes) && bytes[pos] != '\r' {
 		pos++
+	}
+
+	if pos >= len(bytes) {
+		return "", 0, errors.New("invalid bulk string: missing \\r\\n terminator")
 	}
 
 	pos += 2
 
 	startOfString := pos
 
-	for bytes[pos] != '\r' {
+	for pos < len(bytes) && bytes[pos] != '\r' {
 		pos++
+	}
+
+	if pos >= len(bytes) {
+		return "", 0, errors.New("invalid bulk string: missing \\r\\n terminator")
 	}
 
 	return string(bytes[startOfString:pos]), pos + 2, nil
@@ -64,9 +80,13 @@ func ReadArray(bytes []byte) (interface{}, int, error) {
 
 	numberOfElements := 0
 
-	for bytes[pos] != '\r' {
+	for pos < len(bytes) && bytes[pos] != '\r' {
 		numberOfElements = numberOfElements*10 + int(bytes[pos]-'0')
 		pos++
+	}
+
+	if pos >= len(bytes) {
+		return nil, 0, errors.New("invalid array: missing \\r\\n terminator")
 	}
 
 	pos += 2

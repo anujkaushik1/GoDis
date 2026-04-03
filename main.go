@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	config "github.com/anujkaushik1/GoDis/Config"
+	config "github.com/anujkaushik1/GoDis/config"
 	"github.com/anujkaushik1/GoDis/sever"
 )
 

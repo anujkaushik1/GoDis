@@ -1,16 +1,12 @@
 package core
 
 import (
-	"fmt"
-	"net"
 	"strconv"
 )
 
-func EvalAndRespond(client net.Conn, redisCmd *RedisCmd) error {
+func EvalAndRespond(client FileDescriptor, redisCmd *RedisCmd) error {
 	cmd := redisCmd.Cmd
 	args := redisCmd.Args
-
-	fmt.Println("hahshajhsjhaa arggss= ", args)
 
 	if cmd == "COMMAND" {
 		_, err := client.Write([]byte("+OK\r\n"))

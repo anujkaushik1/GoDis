@@ -6,7 +6,8 @@ import (
 	"net"
 	"syscall"
 
-	config "github.com/anujkaushik1/GoDis/Config"
+	config "github.com/anujkaushik1/GoDis/config"
+	"github.com/anujkaushik1/GoDis/core"
 )
 
 func RunAsyncTcpServer() error {
@@ -39,6 +40,7 @@ func RunAsyncTcpServer() error {
 
 	kq, err := syscall.Kqueue()
 	if err != nil {
+		return err
 	}
 
 	event := syscall.Kevent_t{
@@ -50,35 +52,69 @@ func RunAsyncTcpServer() error {
 	_, err = syscall.Kevent(kq, []syscall.Kevent_t{event}, nil, nil)
 	if err != nil {
 		return err
-
 	}
-
 	fmt.Println("Watching for client connections...")
 
 	events := make([]syscall.Kevent_t, max_clients)
 
+	noOfClients := 0
+
 	for {
-		_, err := syscall.Kevent(kq, nil, events, nil)
+		n, err := syscall.Kevent(kq, nil, events, nil)
 		if err != nil {
-			fmt.Println("Error in event:: ", err.Error())
 			continue
 		}
 
-		fmt.Println("multiple clients might be ready")
+		for i := 0; i < n; i++ {
+			if events[i].Ident == uint64(serverFD) {
+				for {
+					clientFD, _, err := syscall.Accept(serverFD)
 
-		for {
-			clientFD, _, err := syscall.Accept(serverFD)
+					if err != nil {
+						if err == syscall.EAGAIN {
+							break // queue empty
+						}
 
-			if err != nil {
-				if err == syscall.EAGAIN {
-					break // queue empty
+						fmt.Println("accept error:", err.Error())
+						break
+					}
+
+					noOfClients++
+
+					clientEvent := syscall.Kevent_t{
+						Ident:  uint64(clientFD),
+						Filter: syscall.EVFILT_READ,
+						Flags:  syscall.EV_ADD | syscall.EV_ENABLE,
+					}
+
+					_, err = syscall.Kevent(kq, []syscall.Kevent_t{clientEvent}, nil, nil)
+					if err != nil {
+						fmt.Println("Error adding client event:", err.Error())
+						continue
+					}
+				}
+			} else {
+				clientFD := events[i].Ident
+				clientFileDescriptorStruct := core.FileDescriptor{FD: int(clientFD)}
+				redisCmd, err := ReadCommand(clientFileDescriptorStruct)
+
+				if err != nil {
+					clientFileDescriptorStruct.Close()
+					noOfClients--
+					log.Println("client disconnected")
+					continue
 				}
 
-				fmt.Println("accept error:", err.Error())
-				break
+				err = Respond(clientFileDescriptorStruct, redisCmd)
+				if err != nil {
+					clientFileDescriptorStruct.Close()
+					noOfClients--
+					log.Println("client disconnected")
+					continue
+				}
+
 			}
 
-			fmt.Println(clientFD)
 		}
 
 	}
