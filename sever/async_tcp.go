@@ -69,7 +69,6 @@ func RunAsyncTcpServer() error {
 			if events[i].Ident == uint64(serverFD) {
 				for {
 					clientFD, _, err := syscall.Accept(serverFD)
-
 					if err != nil {
 						if err == syscall.EAGAIN {
 							break // queue empty
@@ -77,6 +76,10 @@ func RunAsyncTcpServer() error {
 
 						fmt.Println("accept error:", err.Error())
 						break
+					}
+
+					if err = syscall.SetNonblock(clientFD, true); err != nil {
+						return err
 					}
 
 					noOfClients++
