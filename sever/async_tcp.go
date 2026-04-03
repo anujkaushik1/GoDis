@@ -64,15 +64,22 @@ func RunAsyncTcpServer() error {
 			continue
 		}
 
-		fmt.Println("New client is ready to be accepted")
+		fmt.Println("multiple clients might be ready")
 
-		clientFD, _, err := syscall.Accept(serverFD)
-		if err != nil {
-			fmt.Println("Error while accepting client: ", err.Error())
-			continue
+		for {
+			clientFD, _, err := syscall.Accept(serverFD)
+
+			if err != nil {
+				if err == syscall.EAGAIN {
+					break // queue empty
+				}
+
+				fmt.Println("accept error:", err.Error())
+				break
+			}
+
+			fmt.Println(clientFD)
 		}
-
-		fmt.Println("Accepted client fd:", clientFD)
 
 	}
 
