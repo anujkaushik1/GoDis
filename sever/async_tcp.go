@@ -43,7 +43,7 @@ func RunAsyncTcpServer() error {
 		return err
 	}
 
-	event := syscall.Kevent_t{
+	event := syscall.Kevent_t{ //notify when socket becomes (readable)
 		Ident:  uint64(serverFD),
 		Filter: syscall.EVFILT_READ,
 		Flags:  syscall.EV_ADD | syscall.EV_ENABLE,
