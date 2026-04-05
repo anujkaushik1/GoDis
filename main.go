@@ -13,6 +13,7 @@ func setupFlags() {
 
 	flag.StringVar(&config.App.Host, "host", "0.0.0.0", "Host address for the server")
 	flag.IntVar(&config.App.Port, "port", 7379, "Port number for the server")
+	flag.IntVar(&config.App.Memory, "memory", 1, "Memory in MB for the server")
 	flag.Parse()
 
 }
