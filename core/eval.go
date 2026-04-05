@@ -122,6 +122,27 @@ func EvalTTL(client FileDescriptor, args []string) error {
 
 }
 
+func EvalExpire(client FileDescriptor, args []string) error {
+
+	if len(args) <= 1 {
+		return EvalErr(client, "ERR wrong number of arguments for 'expire' command")
+	}
+
+	storeObj := Get(args[0])
+
+	if storeObj == nil {
+		return EvalInteger(client, 0)
+	}
+	value := storeObj.Value
+	expiresIn, err := strconv.Atoi(args[1])
+	if err != nil {
+		return EvalErr(client, "ERR value is not an integer or out of range")
+	}
+
+	Set(args[0], value, int64(expiresIn))
+	return EvalInteger(client, 1)
+
+}
 func EvalAndRespond(client FileDescriptor, redisCmd *RedisCmd) error {
 	cmd := redisCmd.Cmd
 	args := redisCmd.Args
@@ -143,6 +164,10 @@ func EvalAndRespond(client FileDescriptor, redisCmd *RedisCmd) error {
 
 	if cmd == "TTL" {
 		return EvalTTL(client, args)
+	}
+
+	if cmd == "EXPIRE" {
+		return EvalExpire(client, args)
 	}
 
 	return nil
