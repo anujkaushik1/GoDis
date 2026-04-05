@@ -35,6 +35,11 @@ func EvalNil(client FileDescriptor) error {
 	return err
 }
 
+func EvalInteger(client FileDescriptor, val int64) error {
+	_, err := client.Write([]byte(":" + strconv.FormatInt(val, 10) + "\r\n"))
+	return err
+}
+
 func EvalSET(client FileDescriptor, args []string) error {
 
 	if len(args) <= 1 {
@@ -91,6 +96,32 @@ func EvalGET(client FileDescriptor, args []string) error {
 
 }
 
+func EvalTTL(client FileDescriptor, args []string) error {
+	if len(args) > 1 {
+		return EvalErr(client, "ERR wrong number of arguments for 'ttl' command")
+	}
+
+	storeObj := Get(args[0])
+
+	if storeObj == nil {
+		return EvalInteger(client, -2)
+	}
+
+	expiresIn := storeObj.ExpiresAt
+
+	if expiresIn < 0 {
+		return EvalInteger(client, -1)
+	}
+
+	if time.Now().UnixMilli() > expiresIn {
+		return EvalInteger(client, -2)
+	}
+
+	ttl := (expiresIn - time.Now().UnixMilli()) / 1000
+	return EvalInteger(client, ttl)
+
+}
+
 func EvalAndRespond(client FileDescriptor, redisCmd *RedisCmd) error {
 	cmd := redisCmd.Cmd
 	args := redisCmd.Args
@@ -108,6 +139,10 @@ func EvalAndRespond(client FileDescriptor, redisCmd *RedisCmd) error {
 
 	if cmd == "GET" {
 		return EvalGET(client, args)
+	}
+
+	if cmd == "TTL" {
+		return EvalTTL(client, args)
 	}
 
 	return nil
