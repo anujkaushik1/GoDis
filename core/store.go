@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	config "github.com/anujkaushik1/GoDis/config"
@@ -16,8 +17,26 @@ type Obj struct {
 
 func Set(key string, value any, durationSec ...int64) {
 
-	fmt.Println("memoryy::: ", config.App.Memory)
-	fmt.Println(GetMemoryStats().Alloc)
+	haha := false
+	if float64(config.App.Memory) <= GetMemoryStats().Alloc {
+		Evict()
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("EVICCCTEDDDDD ==== ")
+		fmt.Println(float64(config.App.Memory))
+		fmt.Println(GetMemoryStats().Alloc)
+		fmt.Println(len(store))
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
+
+		haha = true
+
+	}
 
 	expiresAt := int64(-1)
 
@@ -31,6 +50,18 @@ func Set(key string, value any, durationSec ...int64) {
 	}
 
 	store[key] = &obj
+
+	if haha {
+		fmt.Println("")
+		fmt.Println("----------")
+		fmt.Println("EVICCCTEDDDDD ==== ")
+		fmt.Println(float64(config.App.Memory))
+		fmt.Println(GetMemoryStats().Alloc)
+		fmt.Println(len(store))
+		fmt.Println("")
+		fmt.Println("----------")
+		os.Exit(1)
+	}
 }
 
 func Get(key string) *Obj {
