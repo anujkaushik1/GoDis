@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"syscall"
-	"time"
 
 	config "github.com/anujkaushik1/GoDis/config"
 	"github.com/anujkaushik1/GoDis/core"
@@ -62,12 +61,10 @@ func RunAsyncTcpServer() error {
 	noOfClients := 0
 
 	for {
-		n, err := syscall.Kevent(kq, nil, events, nil)
+		n, err := syscall.Kevent(kq, nil, events, nil) // merge similar events for same fd (n=1) (event-based) but similar events for diff fd (n -> events * unique fd)
 		if err != nil {
 			continue
 		}
-
-		fmt.Println("hahahahahahhahshjajsjj = ", n)
 
 		for i := 0; i < n; i++ {
 			if events[i].Ident == uint64(serverFD) {
@@ -103,9 +100,6 @@ func RunAsyncTcpServer() error {
 					}
 				}
 			} else {
-
-				time.Sleep(20 * time.Second)
-
 				clientFD := events[i].Ident
 				clientFileDescriptorStruct := core.FileDescriptor{FD: int(clientFD)}
 				redisCmd, err := ReadCommand(clientFileDescriptorStruct)
