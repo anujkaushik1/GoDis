@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"syscall"
+	"time"
 
 	config "github.com/anujkaushik1/GoDis/config"
 	"github.com/anujkaushik1/GoDis/core"
@@ -66,6 +67,8 @@ func RunAsyncTcpServer() error {
 			continue
 		}
 
+		fmt.Println("hahahahahahhahshjajsjj = ", n)
+
 		for i := 0; i < n; i++ {
 			if events[i].Ident == uint64(serverFD) {
 				for {
@@ -85,6 +88,8 @@ func RunAsyncTcpServer() error {
 
 					noOfClients++
 
+					fmt.Println("Total clients connected: ", noOfClients)
+
 					clientEvent := syscall.Kevent_t{
 						Ident:  uint64(clientFD),
 						Filter: syscall.EVFILT_READ,
@@ -98,6 +103,9 @@ func RunAsyncTcpServer() error {
 					}
 				}
 			} else {
+
+				time.Sleep(20 * time.Second)
+
 				clientFD := events[i].Ident
 				clientFileDescriptorStruct := core.FileDescriptor{FD: int(clientFD)}
 				redisCmd, err := ReadCommand(clientFileDescriptorStruct)
