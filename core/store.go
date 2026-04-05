@@ -1,6 +1,8 @@
 package core
 
-import "time"
+import (
+	"time"
+)
 
 var store = make(map[string]*Obj)
 
@@ -26,4 +28,13 @@ func Set(key string, value any, durationSec ...int64) {
 
 func Get(key string) *Obj {
 	return store[key]
+}
+
+func Del(key string) bool {
+	_, ok := store[key]
+	if ok {
+		delete(store, key)
+		return true
+	}
+	return false
 }

@@ -143,6 +143,24 @@ func EvalExpire(client FileDescriptor, args []string) error {
 	return EvalInteger(client, 1)
 
 }
+
+func EvalDel(client FileDescriptor, args []string) error {
+
+	if len(args) == 0 {
+		return EvalErr(client, "ERR wrong number of arguments for 'del' command")
+	}
+
+	deletedCount := 0
+
+	for key := 0; key < len(args); key++ {
+		if Del(args[key]) {
+			deletedCount++
+		}
+	}
+
+	return EvalInteger(client, int64(deletedCount))
+}
+
 func EvalAndRespond(client FileDescriptor, redisCmd *RedisCmd) error {
 	cmd := redisCmd.Cmd
 	args := redisCmd.Args
@@ -168,6 +186,10 @@ func EvalAndRespond(client FileDescriptor, redisCmd *RedisCmd) error {
 
 	if cmd == "EXPIRE" {
 		return EvalExpire(client, args)
+	}
+
+	if cmd == "DEL" {
+		return EvalDel(client, args)
 	}
 
 	return nil
