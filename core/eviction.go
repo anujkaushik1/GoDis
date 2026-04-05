@@ -1,6 +1,8 @@
 package core
 
 import (
+	"runtime"
+
 	config "github.com/anujkaushik1/GoDis/config"
 )
 
@@ -25,6 +27,7 @@ func Evict() {
 		if len(store) == 0 {
 			break
 		}
-		evictBatch(10) //10% keys will be deleted
+		evictBatch(10)
+		runtime.GC()
 	}
 }

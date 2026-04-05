@@ -19,7 +19,6 @@ func Set(key string, value any, durationSec ...int64) {
 
 	haha := false
 	if float64(config.App.Memory) <= GetMemoryStats().Alloc {
-		Evict()
 		fmt.Println("")
 		fmt.Println("")
 		fmt.Println("")
@@ -33,7 +32,7 @@ func Set(key string, value any, durationSec ...int64) {
 		fmt.Println("")
 		fmt.Println("")
 		fmt.Println("")
-
+		Evict()
 		haha = true
 
 	}
@@ -54,7 +53,7 @@ func Set(key string, value any, durationSec ...int64) {
 	if haha {
 		fmt.Println("")
 		fmt.Println("----------")
-		fmt.Println("EVICCCTEDDDDD ==== ")
+		fmt.Println("EVICCCTEDDDDD afterrrrrr==== ")
 		fmt.Println(float64(config.App.Memory))
 		fmt.Println(GetMemoryStats().Alloc)
 		fmt.Println(len(store))
