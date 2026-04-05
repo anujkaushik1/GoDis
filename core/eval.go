@@ -85,6 +85,7 @@ func EvalGET(client FileDescriptor, args []string) error {
 	value := storeObj.Value
 
 	if expiresIn > 0 && time.Now().UnixMilli() > expiresIn {
+		Del(args[0])
 		return EvalNil(client)
 	}
 

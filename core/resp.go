@@ -74,7 +74,7 @@ func ReadBulkString(bytes []byte) (string, int, error) {
 
 }
 
-func ReadArray(bytes []byte) (interface{}, int, error) {
+func ReadArray(bytes []byte) (any, int, error) {
 
 	pos := 1
 
@@ -91,7 +91,7 @@ func ReadArray(bytes []byte) (interface{}, int, error) {
 
 	pos += 2
 
-	arrayElements := make([]interface{}, numberOfElements)
+	arrayElements := make([]any, numberOfElements)
 	arrayIdx := 0
 	for arrayIdx < len(arrayElements) {
 		value, delta, err := DecodeOne(bytes[pos:])
@@ -108,7 +108,7 @@ func ReadArray(bytes []byte) (interface{}, int, error) {
 	return arrayElements, pos, nil
 }
 
-func DecodeOne(bytes []byte) (interface{}, int, error) {
+func DecodeOne(bytes []byte) (any, int, error) {
 
 	switch bytes[0] {
 	case '+':
@@ -132,7 +132,7 @@ func DecodeOne(bytes []byte) (interface{}, int, error) {
 
 }
 
-func Decode(bytes []byte) (interface{}, error) {
+func Decode(bytes []byte) (any, error) {
 
 	if len(bytes) == 0 {
 		return nil, errors.New("No data found")
@@ -152,7 +152,7 @@ func DecodeAndFlatten(bytes []byte) []string {
 	return flatten(v)
 }
 
-func flatten(v interface{}) []string {
+func flatten(v any) []string {
 	result := make([]string, 0)
 
 	switch val := v.(type) {
@@ -160,7 +160,7 @@ func flatten(v interface{}) []string {
 		result = append(result, val)
 	case int64:
 		result = append(result, strconv.FormatInt(val, 10))
-	case []interface{}:
+	case []any:
 		for _, item := range val {
 			result = append(result, flatten(item)...)
 		}

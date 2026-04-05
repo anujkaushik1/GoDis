@@ -13,6 +13,7 @@ import (
 func RunAsyncTcpServer() error {
 	host := config.App.Host
 	port := config.App.Port
+
 	log.Println("Starting TCP server on: ", host, ":", port)
 
 	serverFD, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_STREAM, 0)

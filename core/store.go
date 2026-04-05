@@ -1,7 +1,10 @@
 package core
 
 import (
+	"fmt"
 	"time"
+
+	config "github.com/anujkaushik1/GoDis/config"
 )
 
 var store = make(map[string]*Obj)
@@ -12,6 +15,10 @@ type Obj struct {
 }
 
 func Set(key string, value any, durationSec ...int64) {
+
+	fmt.Println("memoryy::: ", config.App.Memory)
+	fmt.Println(GetMemoryStats().Alloc)
+
 	expiresAt := int64(-1)
 
 	if len(durationSec) > 0 && durationSec[0] > 0 {
