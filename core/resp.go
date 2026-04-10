@@ -132,24 +132,39 @@ func DecodeOne(bytes []byte) (any, int, error) {
 
 }
 
-func Decode(bytes []byte) (any, error) {
+// '*1\r\n$4\r\nPING\r\n*1\r\n$4\r\nPING\r\n*1\r\n$4\r\nPING\r\n'
+
+func Decode(bytes []byte) []any {
 
 	if len(bytes) == 0 {
-		return nil, errors.New("No data found")
+		return []any{}
 	}
 
-	value, _, err := DecodeOne(bytes)
+	globalDelta := 0
+	bufferedData := make([]any, 0)
+	for globalDelta < len(bytes) {
+		value, delta, err := DecodeOne(bytes[globalDelta:])
 
-	return value, err
+		globalDelta += delta
 
+		if err != nil {
+			continue
+		}
+
+		bufferedData = append(bufferedData, value)
+
+	}
+
+	return bufferedData
 }
 
-func DecodeAndFlatten(bytes []byte) []string {
-	v, err := Decode(bytes)
-	if err != nil {
-		return nil
+func DecodeAndFlatten(bytes []byte) [][]string {
+	commands := Decode(bytes)
+	result := make([][]string, 0, len(commands))
+	for _, cmd := range commands {
+		result = append(result, flatten(cmd))
 	}
-	return flatten(v)
+	return result
 }
 
 func flatten(v any) []string {

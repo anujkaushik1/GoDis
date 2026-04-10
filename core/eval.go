@@ -5,45 +5,39 @@ import (
 	"time"
 )
 
-func EvalPING(client FileDescriptor, args []string) error {
+func EvalPING(args []string) []byte {
 	if len(args) == 0 {
-		_, err := client.Write([]byte("+PONG\r\n"))
-		return err
+		return []byte("+PONG\r\n")
 	}
 	if len(args) == 1 {
-		_, err := client.Write([]byte("$" + strconv.Itoa(len(args[0])) + "\r\n" + args[0] + "\r\n"))
-		return err
+		return []byte("$" + strconv.Itoa(len(args[0])) + "\r\n" + args[0] + "\r\n")
 	}
 	if len(args) > 1 {
-		return EvalErr(client, "ERR wrong number of arguments for 'ping' command")
+		return EvalErr("ERR wrong number of arguments for 'ping' command")
 	}
 	return nil
 }
 
-func EvalErr(client FileDescriptor, msg string) error {
-	_, err := client.Write([]byte("-" + msg + "\r\n"))
-	return err
+func EvalErr(msg string) []byte {
+	return []byte("-" + msg + "\r\n")
 }
 
-func EvalString(client FileDescriptor, msg string) error {
-	_, err := client.Write([]byte("+" + msg + "\r\n"))
-	return err
+func EvalString(msg string) []byte {
+	return []byte("+" + msg + "\r\n")
 }
 
-func EvalNil(client FileDescriptor) error {
-	_, err := client.Write([]byte("$-1\r\n"))
-	return err
+func EvalNil() []byte {
+	return []byte("$-1\r\n")
 }
 
-func EvalInteger(client FileDescriptor, val int64) error {
-	_, err := client.Write([]byte(":" + strconv.FormatInt(val, 10) + "\r\n"))
-	return err
+func EvalInteger(val int64) []byte {
+	return []byte(":" + strconv.FormatInt(val, 10) + "\r\n")
 }
 
-func EvalSET(client FileDescriptor, args []string) error {
+func EvalSET(args []string) []byte {
 
 	if len(args) <= 1 {
-		return EvalErr(client, "ERR wrong number of arguments for 'set' command")
+		return EvalErr("ERR wrong number of arguments for 'set' command")
 	}
 
 	key, value := args[0], args[1]
@@ -53,32 +47,32 @@ func EvalSET(client FileDescriptor, args []string) error {
 		if args[i] == "EX" || args[i] == "ex" {
 			newIdx := i + 1
 			if newIdx == len(args) {
-				return EvalErr(client, "ERR syntax error")
+				return EvalErr("ERR syntax error")
 			}
 
 			intVal, err := strconv.Atoi(args[newIdx])
 			if err != nil {
-				return EvalErr(client, "ERR value is not an integer or out of range")
+				return EvalErr("ERR value is not an integer or out of range")
 			}
 			expiresIn = intVal
 		}
 	}
 
 	Set(key, value, int64(expiresIn))
-	return EvalString(client, "OK")
+	return EvalString("OK")
 
 }
 
-func EvalGET(client FileDescriptor, args []string) error {
+func EvalGET(args []string) []byte {
 
 	if len(args) > 1 {
-		return EvalErr(client, "ERR wrong number of arguments for 'get' command")
+		return EvalErr("ERR wrong number of arguments for 'get' command")
 	}
 
 	storeObj := Get(args[0])
 
 	if storeObj == nil {
-		return EvalNil(client)
+		return EvalNil()
 	}
 
 	expiresIn := storeObj.ExpiresAt
@@ -86,69 +80,69 @@ func EvalGET(client FileDescriptor, args []string) error {
 
 	if expiresIn > 0 && time.Now().UnixMilli() > expiresIn {
 		Del(args[0])
-		return EvalNil(client)
+		return EvalNil()
 	}
 
 	strValue, ok := value.(string)
 	if !ok {
-		return EvalNil(client)
+		return EvalNil()
 	}
-	return EvalString(client, strValue)
+	return EvalString(strValue)
 
 }
 
-func EvalTTL(client FileDescriptor, args []string) error {
+func EvalTTL(args []string) []byte {
 	if len(args) > 1 {
-		return EvalErr(client, "ERR wrong number of arguments for 'ttl' command")
+		return EvalErr("ERR wrong number of arguments for 'ttl' command")
 	}
 
 	storeObj := Get(args[0])
 
 	if storeObj == nil {
-		return EvalInteger(client, -2)
+		return EvalInteger(-2)
 	}
 
 	expiresIn := storeObj.ExpiresAt
 
 	if expiresIn < 0 {
-		return EvalInteger(client, -1)
+		return EvalInteger(-1)
 	}
 
 	if time.Now().UnixMilli() > expiresIn {
-		return EvalInteger(client, -2)
+		return EvalInteger(-2)
 	}
 
 	ttl := (expiresIn - time.Now().UnixMilli()) / 1000
-	return EvalInteger(client, ttl)
+	return EvalInteger(ttl)
 
 }
 
-func EvalExpire(client FileDescriptor, args []string) error {
+func EvalExpire(args []string) []byte {
 
 	if len(args) <= 1 {
-		return EvalErr(client, "ERR wrong number of arguments for 'expire' command")
+		return EvalErr("ERR wrong number of arguments for 'expire' command")
 	}
 
 	storeObj := Get(args[0])
 
 	if storeObj == nil {
-		return EvalInteger(client, 0)
+		return EvalInteger(0)
 	}
 	value := storeObj.Value
 	expiresIn, err := strconv.Atoi(args[1])
 	if err != nil {
-		return EvalErr(client, "ERR value is not an integer or out of range")
+		return EvalErr("ERR value is not an integer or out of range")
 	}
 
 	Set(args[0], value, int64(expiresIn))
-	return EvalInteger(client, 1)
+	return EvalInteger(1)
 
 }
 
-func EvalDel(client FileDescriptor, args []string) error {
+func EvalDel(args []string) []byte {
 
 	if len(args) == 0 {
-		return EvalErr(client, "ERR wrong number of arguments for 'del' command")
+		return EvalErr("ERR wrong number of arguments for 'del' command")
 	}
 
 	deletedCount := 0
@@ -159,38 +153,38 @@ func EvalDel(client FileDescriptor, args []string) error {
 		}
 	}
 
-	return EvalInteger(client, int64(deletedCount))
+	return EvalInteger(int64(deletedCount))
 }
 
-func EvalAndRespond(client FileDescriptor, redisCmd *RedisCmd) error {
+func Eval(redisCmd *RedisCmd) []byte {
 	cmd := redisCmd.Cmd
 	args := redisCmd.Args
 
 	if cmd == "COMMAND" {
-		return EvalString(client, "OK")
+		return EvalString("OK")
 	}
 	if cmd == "PING" {
-		return EvalPING(client, args)
+		return EvalPING(args)
 	}
 
 	if cmd == "SET" {
-		return EvalSET(client, args)
+		return EvalSET(args)
 	}
 
 	if cmd == "GET" {
-		return EvalGET(client, args)
+		return EvalGET(args)
 	}
 
 	if cmd == "TTL" {
-		return EvalTTL(client, args)
+		return EvalTTL(args)
 	}
 
 	if cmd == "EXPIRE" {
-		return EvalExpire(client, args)
+		return EvalExpire(args)
 	}
 
 	if cmd == "DEL" {
-		return EvalDel(client, args)
+		return EvalDel(args)
 	}
 
 	return nil

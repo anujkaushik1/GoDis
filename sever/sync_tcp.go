@@ -6,7 +6,7 @@ import (
 	"github.com/anujkaushik1/GoDis/core"
 )
 
-func ReadCommand(client core.FileDescriptor) (*core.RedisCmd, error) {
+func ReadCommand(client core.FileDescriptor) (*core.RedisCmds, error) {
 	buffer := make([]byte, 1024)
 	n, err := client.Read(buffer)
 	if err != nil {
@@ -18,18 +18,30 @@ func ReadCommand(client core.FileDescriptor) (*core.RedisCmd, error) {
 		return nil, fmt.Errorf("unable to decode command")
 	}
 
-	redisCmd := core.RedisCmd{
-		Cmd:  tokens[0],
-		Args: tokens[1:],
+	redisCmds := make(core.RedisCmds, 0)
+
+	for i := 0; i < len(tokens); i++ {
+		token := tokens[i]
+
+		redisCmd := &core.RedisCmd{
+			Cmd:  token[0],
+			Args: token[1:],
+		}
+
+		redisCmds = append(redisCmds, redisCmd)
 	}
 
-	return &redisCmd, nil
+	return &redisCmds, nil
 
 }
 
-func Respond(client core.FileDescriptor, redisCmd *core.RedisCmd) error {
-	return core.EvalAndRespond(client, redisCmd)
-
+func Respond(client core.FileDescriptor, redisCmds *core.RedisCmds) error {
+	var buf []byte
+	for _, redisCmd := range *redisCmds {
+		buf = append(buf, core.Eval(redisCmd)...)
+	}
+	_, err := client.Write(buf)
+	return err
 }
 
 // func RunTcpServer() {

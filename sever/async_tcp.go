@@ -102,7 +102,7 @@ func RunAsyncTcpServer() error {
 			} else {
 				clientFD := events[i].Ident
 				clientFileDescriptorStruct := core.FileDescriptor{FD: int(clientFD)}
-				redisCmd, err := ReadCommand(clientFileDescriptorStruct)
+				redisCmds, err := ReadCommand(clientFileDescriptorStruct)
 
 				if err != nil {
 					clientFileDescriptorStruct.Close()
@@ -111,7 +111,7 @@ func RunAsyncTcpServer() error {
 					continue
 				}
 
-				err = Respond(clientFileDescriptorStruct, redisCmd)
+				err = Respond(clientFileDescriptorStruct, redisCmds)
 				if err != nil {
 					clientFileDescriptorStruct.Close()
 					noOfClients--
