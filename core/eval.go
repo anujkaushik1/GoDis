@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -59,6 +60,8 @@ func EvalSET(args []string) []byte {
 	}
 
 	Set(key, value, int64(expiresIn))
+	cmd := fmt.Sprintf("*3\r\n$3\r\nSET\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n", len(key), key, len(value), value)
+	AppendToAof(cmd)
 	return EvalString("OK")
 
 }
@@ -150,10 +153,17 @@ func EvalDel(args []string) []byte {
 	for key := 0; key < len(args); key++ {
 		if Del(args[key]) {
 			deletedCount++
+			cmd := fmt.Sprintf("*2\r\n$3\r\nDEL\r\n$%d\r\n%s\r\n", len(args[key]), args[key])
+			AppendToAof(cmd)
 		}
 	}
 
 	return EvalInteger(int64(deletedCount))
+}
+
+func EvalBgRewriteAof() []byte {
+	DumpAllAof()
+	return EvalString("OK")
 }
 
 func Eval(redisCmd *RedisCmd) []byte {
@@ -185,6 +195,10 @@ func Eval(redisCmd *RedisCmd) []byte {
 
 	if cmd == "DEL" {
 		return EvalDel(args)
+	}
+
+	if cmd == "BGREWRITEAOF" {
+		return EvalBgRewriteAof()
 	}
 
 	return nil

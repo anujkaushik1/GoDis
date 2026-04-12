@@ -48,3 +48,10 @@ func Del(key string) bool {
 	}
 	return false
 }
+
+func BulkWriteToStore(redisCmds *RedisCmds) error {
+	for _, redisCmd := range *redisCmds {
+		Eval(redisCmd)
+	}
+	return nil
+}
